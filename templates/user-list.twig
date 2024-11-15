@@ -1,0 +1,19 @@
+{% extends 'layout.twig' %}
+
+    {% block title %}
+        My User list
+    {% endblock %}
+    {% block body %}
+        <h2>Inheritance</h2>
+        <ol id="user.list">
+            {% for user in users %}
+                <li>{{ user.id }}. {{ user.login|lower }} {{ user.communicationChannel|upper }} ({{ user.communicationMethod }}) </li>
+            {% endfor %}
+        </ol>
+    {% endblock %}
+    {% block footer %}
+        <h1>Footer</h1>
+        {{ block('body') }}
+        <h1>Repeat twice</h1>
+        {{ block('body') }}
+    {% endblock %}

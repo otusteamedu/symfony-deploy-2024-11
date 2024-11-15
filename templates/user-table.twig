@@ -1,0 +1,15 @@
+{% extends 'layout.twig' %}
+    
+{% import 'macros.twig' as new %}
+
+    {% block title %}
+        {{ my_greet('User') }}
+    {% endblock %}
+    {% block body %}
+        <table class="table table-hover">
+            <tbody>
+            <tr><th>ID</th><th>Логин</th><th>Роли</th><th>Канал коммуникации</th><th>Адрес</th></tr>
+            {{ new.user_table_body(users) }}
+            </tbody>
+        </table>
+    {% endblock %}

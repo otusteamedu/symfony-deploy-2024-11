@@ -1,0 +1,200 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    baseUrl: 'http://localhost:7777'
+    uploadPrefix: '/app/public'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    strong_formatter:
+        class: App\Domain\Service\FormatService
+        factory: ['App\Domain\Service\FormatServiceFactory', 'strongFormatService']
+        tags: ['app.formatter_service']
+
+    cite_formatter:
+        class: App\Domain\Service\FormatService
+        factory: ['@App\Domain\Service\FormatServiceFactory', 'citeFormatService']
+        tags: ['app.formatter_service']
+
+    main_header_formatter:
+        class: App\Domain\Service\FormatService
+        factory: ['@App\Domain\Service\FormatServiceFactory', 'headerFormatService']
+        arguments: [1]
+        tags: ['app.formatter_service']
+
+    hello_greeter:
+        class: App\Domain\Service\GreeterService
+        arguments:
+            $greet: 'Hello'
+        tags:
+            - { name: 'app.greeter_service', priority: 3 }
+
+    greetings_greeter:
+        class: App\Domain\Service\GreeterService
+        arguments:
+            $greet: 'Greetings'
+        tags:
+            - { name: 'app.greeter_service', priority: 20 }
+
+    hi_greeter:
+        class: App\Domain\Service\GreeterService
+        arguments:
+            $greet: 'Hi'
+        tags:
+            - { name: 'app.greeter_service', priority: 1 }
+
+    list_formatter:
+        class: App\Domain\Service\FormatService
+        calls:
+            - [setTag, ['ol']]
+
+    list_item_formatter:
+        class: App\Domain\Service\FormatService
+        calls:
+            - [setTag, ['li']]
+        tags: ['app.formatter_service']
+
+    App\Controller\Web\UpdateUserAvatarLink\v1\Manager:
+        arguments:
+            $baseUrl: '%baseUrl%'
+            $uploadPrefix: '%uploadPrefix%'
+
+    App\Application\EventListener\KernelExceptionEventListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
+
+    App\Application\EventListener\KernelViewEventListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.view }
+
+    App\Application\Security\AuthService:
+        arguments:
+            $tokenTTL: '%env(JWT_TTL_SEC)%'
+
+    App\Controller\Web\CreateUser\v2\ManagerLoggerDecorator:
+        arguments:
+            $manager: '@App\Controller\Web\CreateUser\v2\Manager'
+
+    App\Controller\Web\CreateUser\v2\ManagerInterface:
+        alias: App\Controller\Web\CreateUser\v2\ManagerLoggerDecorator
+
+    App\Infrastructure\Storage\MetricsStorage:
+        arguments:
+            - graphite
+            - 8125
+            - my_app
+
+    App\Domain\Repository\TweetRepositoryInterface:
+        alias: App\Infrastructure\Repository\TweetRepositoryCacheDecorator
+
+    redis_client:
+        class: Redis
+        factory: Symfony\Component\Cache\Adapter\RedisAdapter::createConnection
+        arguments:
+            - '%env(REDIS_DSN)%'
+
+    redis_adapter:
+        class: Symfony\Component\Cache\Adapter\RedisAdapter
+        arguments:
+            - '@redis_client'
+            - 'my_app'
+
+    App\Application\Symfony\AdapterCountingDecorator:
+        arguments:
+            $adapter: '@redis_adapter'
+
+    redis_tag_aware_adapter:
+        class: Symfony\Component\Cache\Adapter\RedisTagAwareAdapter
+        arguments:
+            - '@redis_client'
+            - 'my_app'
+
+    App\Infrastructure\Repository\TweetRepositoryCacheDecorator:
+        arguments:
+            $cache: '@redis_tag_aware_adapter'
+
+    App\Infrastructure\Bus\RabbitMqBus:
+        calls:
+            - [ 'registerProducer', [ !php/enum App\Infrastructure\Bus\AmqpExchangeEnum::AddFollowers, '@old_sound_rabbit_mq.add_followers_producer' ] ]
+            - [ 'registerProducer', [ !php/enum App\Infrastructure\Bus\AmqpExchangeEnum::SendNotification, '@old_sound_rabbit_mq.send_notification_producer' ] ]
+            - [ 'registerProducer', [ !php/enum App\Infrastructure\Bus\AmqpExchangeEnum::PublishTweet, '@old_sound_rabbit_mq.publish_tweet_producer' ] ]
+            - [ 'registerProducer', [ !php/enum App\Infrastructure\Bus\AmqpExchangeEnum::UpdateFeed, '@old_sound_rabbit_mq.update_feed_producer' ] ]
+
+    App\Controller\Amqp\UpdateFeed\Consumer0:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_0'
+
+    App\Controller\Amqp\UpdateFeed\Consumer1:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_1'
+
+    App\Controller\Amqp\UpdateFeed\Consumer2:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_2'
+
+    App\Controller\Amqp\UpdateFeed\Consumer3:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_3'
+
+    App\Controller\Amqp\UpdateFeed\Consumer4:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_4'
+
+    App\Controller\Amqp\UpdateFeed\Consumer5:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_5'
+
+    App\Controller\Amqp\UpdateFeed\Consumer6:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_6'
+
+    App\Controller\Amqp\UpdateFeed\Consumer7:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_7'
+
+    App\Controller\Amqp\UpdateFeed\Consumer8:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_8'
+
+    App\Controller\Amqp\UpdateFeed\Consumer9:
+        class: App\Controller\Amqp\UpdateFeed\Consumer
+        arguments:
+            $key: 'update_feed_9'
+
+    App\Infrastructure\Repository\UserRepository:
+        arguments:
+            $finder: '@fos_elastica.finder.user'
+
+    App\Application\OpenApi\ApiPlatformFactoryDecorator:
+        decorates: 'api_platform.openapi.factory'
+        arguments:
+            - '@.inner'
+        autoconfigure: false
