@@ -3,6 +3,7 @@ sudo cp deploy/supervisor.conf /etc/supervisor/conf.d/demo.conf -f
 sudo sed -i -- "s|%SERVER_NAME%|$1|g" /etc/nginx/conf.d/demo.conf
 sudo service nginx restart
 sudo -u www-data composer install -q
+sudo service php8.3-fpm restart
 sudo -u www-data sed -i -- "s|%DATABASE_HOST%|$2|g" .env
 sudo -u www-data sed -i -- "s|%DATABASE_USER%|$3|g" .env
 sudo -u www-data sed -i -- "s|%DATABASE_PASSWORD%|$4|g" .env

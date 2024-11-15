@@ -1,3 +1,7 @@
+stages:
+  - deploy
+  - rollback
+
 before_script:
   - eval $(ssh-agent -s)
   - ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 -d)
@@ -23,3 +27,12 @@ deploy_server1:
       ln -s /var/www/demo/$DIR /var/www/demo/current"
   only:
     - main
+
+rollback:
+  stage: rollback
+  script:
+    - ssh $SSH_USER@$SERVER1 "unlink /var/www/demo/current &&
+      mv -Tf /var/www/demo/previous /var/www/demo/current &&
+      cd /var/www/demo/current &&
+      sh ./rollback.sh $SERVER1"
+  when: manual

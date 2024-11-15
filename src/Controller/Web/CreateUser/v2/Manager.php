@@ -38,7 +38,7 @@ class Manager implements ManagerInterface
 
         return new CreatedUserDTO(
             $user->getId(),
-            'New login'.$user->getLogin(),
+            'Backup login'.$user->getLogin(),
             $user->getAvatarLink(),
             $user->getRoles(),
             $user->getCreatedAt()->format('Y-m-d H:i:s'),
